@@ -25,17 +25,17 @@ wss.on("error", (error) => {
 
 wss.on("connection", (ws) => {
   console.log("user connected");
-   const wsId = counter++;
+  const wsId = counter++;
 
   ws.on("message", async (msg: string) => {
     const message: MessageInterface = JSON.parse(msg);
     if (message.type === "join") {
       const room = message.payload.room;
       console.log(message);
-         users[wsId] = {
-           room,
-           ws,
-         };
+      users[wsId] = {
+        room,
+        ws,
+      };
 
       await RedisService.getInstance().subscribe(wsId, ws, room);
     }
@@ -53,12 +53,9 @@ wss.on("connection", (ws) => {
   ws.on("close", async () => {
     if (users[wsId]) {
       console.log("user disconnected");
-      delete users[wsId];
 
-      await RedisService.getInstance().unsubscribe(
-        wsId,
-        users[wsId].room,
-      );
+      await RedisService.getInstance().unsubscribe(wsId, users[wsId].room);
+      delete users[wsId];
     } else {
       console.log("user left without joining");
     }
