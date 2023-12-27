@@ -8,8 +8,18 @@ export class RedisService {
 
   constructor() {
     this.subscriptions = new Map();
-    this.subscriber = createClient();
-    this.publisher = createClient();
+    this.subscriber = createClient({
+      socket: {
+        host: "redis-server",
+        port: 6379,
+      },
+    });
+    this.publisher = createClient({
+      socket: {
+        host: "redis-server",
+        port: 6379,
+      },
+    });
     this.subscriber.connect();
     this.publisher.connect();
   }

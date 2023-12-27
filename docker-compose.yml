@@ -1,0 +1,72 @@
+services:
+
+  # nginx:
+  #   build:
+  #     context: ./nginx
+  #     dockerfile: DockerFile
+  #   ports:
+  #     - 80:80
+  #   networks:
+  #     - mynetwork
+
+  haproxy:
+    build:
+      context: .
+      dockerfile: ./haproxy/DockerFile
+    ports:
+      - "80:80"
+      - "443:443"
+    networks:
+      - mynetwork
+    depends_on:
+      - websocket-server-1
+      - websocket-server-2
+      - websocket-server-3
+      - websocket-server-4
+
+
+  websocket-server-1: 
+    build:
+      context: .
+      dockerfile: ./websocket-server/DockerFile
+    ports:
+      - 1000:3000
+    networks:
+      - mynetwork
+  
+  websocket-server-2: 
+    build:
+      context: .
+      dockerfile: ./websocket-server/DockerFile
+    ports:
+      - 1001:3000
+    networks:
+      - mynetwork
+  
+  websocket-server-3: 
+    build:
+      context: .
+      dockerfile: ./websocket-server/DockerFile
+    ports:
+      - 1002:3000
+    networks:
+      - mynetwork
+  
+  websocket-server-4: 
+    build:
+      context: .
+      dockerfile: ./websocket-server/DockerFile
+    ports:
+      - 1003:3000
+    networks:
+      - mynetwork
+
+  redis-server:
+    image: redis:latest
+    ports:
+      - 6379:6379
+    networks:
+      - mynetwork
+
+networks:
+  mynetwork:
