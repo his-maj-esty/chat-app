@@ -3,6 +3,7 @@ import http from "http";
 import { WebSocketServer } from "ws";
 import { MessageInterface } from "../types/websocket";
 import { RedisService } from "../services/RedisService";
+import { dbService } from "../services/dbService";
 
 const app = express();
 const port = 3000;
@@ -12,8 +13,9 @@ const server = http.createServer(app);
 const wss = new WebSocketServer({ server });
 const users: {
   [key: number]: {
-    room: string;
+    roomId: string;
     ws: any;
+    email: string;
   };
 } = {};
 
@@ -23,38 +25,50 @@ wss.on("error", (error) => {
   console.error(`WebSocket Server Error: ${error.message}`);
 });
 
+const db = new dbService();
 wss.on("connection", (ws) => {
   console.log("user connected");
   const wsId = counter++;
 
   ws.on("message", async (msg: string) => {
-    const message: MessageInterface = JSON.parse(msg);
-    if (message.type === "join") {
-      const room = message.payload.room;
-      console.log(message);
-      users[wsId] = {
-        room,
-        ws,
-      };
+    const messageObj: MessageInterface = JSON.parse(msg);
+    const roomId = messageObj.payload.roomId;
+    const email = messageObj.payload.email;
+    try {
+      if (messageObj.type === "join") {
+        console.log(messageObj);
+        users[wsId] = {
+          roomId,
+          ws,
+          email,
+        };
+        await RedisService.getInstance().subscribe(wsId, ws, roomId);
+      }
+      if (messageObj.type === "message") {
+        console.log(messageObj);
+        await RedisService.getInstance().publish(
+          roomId,
+          messageObj.payload.message
+        );
 
-      await RedisService.getInstance().subscribe(wsId, ws, room);
+        await db.addMessage({
+          roomId: roomId,
+          message: messageObj.payload.message,
+          email: email,
+        });
+      }
     }
-
-    if (message.type === "message") {
-      console.log(message);
-
-      await RedisService.getInstance().publish(
-        message.payload.room,
-        message.payload.message
-      );
+    catch (error) {
+      console.log(error);
+      ws.send("error occurred");
+      ws.close();
     }
   });
 
   ws.on("close", async () => {
     if (users[wsId]) {
       console.log("user disconnected");
-
-      await RedisService.getInstance().unsubscribe(wsId, users[wsId].room);
+      await RedisService.getInstance().unsubscribe(wsId, users[wsId].roomId);
       delete users[wsId];
     } else {
       console.log("user left without joining");

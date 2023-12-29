@@ -1,14 +1,4 @@
 services:
-
-  # nginx:
-  #   build:
-  #     context: ./nginx
-  #     dockerfile: DockerFile
-  #   ports:
-  #     - 80:80
-  #   networks:
-  #     - mynetwork
-
   haproxy:
     build:
       context: .
@@ -31,26 +21,44 @@ services:
       dockerfile: ./websocket-server/DockerFile
     ports:
       - 1000:3000
+    environment:
+      - DATABASE_URL:${DATABASE_URL}
+    volumes:
+      - .:/app
     networks:
       - mynetwork
-  
+    depends_on:
+      - chat-postgres
+
   websocket-server-2: 
     build:
       context: .
       dockerfile: ./websocket-server/DockerFile
     ports:
       - 1001:3000
+    environment:
+      - DATABASE_URL:${DATABASE_URL}
+    volumes:
+      - .:/app
     networks:
       - mynetwork
-  
+    depends_on:
+      - chat-postgres
+
   websocket-server-3: 
     build:
       context: .
       dockerfile: ./websocket-server/DockerFile
     ports:
       - 1002:3000
+    environment:
+      - DATABASE_URL:${DATABASE_URL}
+    volumes:
+      - .:/app
     networks:
       - mynetwork
+    depends_on:
+      - chat-postgres
   
   websocket-server-4: 
     build:
@@ -58,8 +66,14 @@ services:
       dockerfile: ./websocket-server/DockerFile
     ports:
       - 1003:3000
+    environment:
+      - DATABASE_URL:${DATABASE_URL}
+    volumes:
+      - .:/app
     networks:
       - mynetwork
+    depends_on:
+      - chat-postgres
 
   redis-server:
     image: redis:latest
@@ -68,5 +82,21 @@ services:
     networks:
       - mynetwork
 
+  chat-postgres:
+    image: postgres:16.1
+    ports:
+      - 5432:5432
+    environment:
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+    volumes:
+      - chat_vol:/var/lib/postgresql/data
+    networks:
+      - mynetwork
+
 networks:
   mynetwork:
+
+volumes:
+  chat_vol:
+    external: true
