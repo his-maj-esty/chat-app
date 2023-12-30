@@ -4,13 +4,17 @@ import { WebSocketServer } from "ws";
 import { MessageInterface } from "../types/websocket";
 import { RedisService } from "../services/RedisService";
 import { dbService } from "../services/dbService";
+import { authenticateUser } from "../middlewares/auth";
+import cookieParser from "cookie-parser";
+import { extractCookie } from "../utils/extract-cookie";
 
 const app = express();
 const port = 3000;
 
+app.use(cookieParser());
 const server = http.createServer(app);
 
-const wss = new WebSocketServer({ server });
+const wss = new WebSocketServer({ noServer: true });
 const users: {
   [key: number]: {
     roomId: string;
@@ -57,8 +61,7 @@ wss.on("connection", (ws) => {
           email: email,
         });
       }
-    }
-    catch (error) {
+    } catch (error) {
       console.log(error);
       ws.send("error occurred");
       ws.close();
@@ -74,6 +77,28 @@ wss.on("connection", (ws) => {
       console.log("user left without joining");
     }
   });
+});
+
+server.on("upgrade", async (req: any, socket, head) => {
+  try {
+    const details = extractCookie(req.headers.cookie, "details");
+    socket.on("error", (error) => console.log(error));
+    const isValid = await authenticateUser(details);
+    socket.removeListener("error", (error) => console.log(error));
+    if (isValid) {
+      wss.handleUpgrade(req, socket, head, (ws) => {
+        wss.emit("connection", ws, req);
+      });
+    } else {
+      socket.write("HTTP/1.1 401 Unauthorized\r\n\r\n");
+      socket.destroy();
+      return;
+    }
+  }
+  catch (error) {
+    console.log("server error");
+    console.log(error);
+  }
 });
 
 server.listen(port, () => console.log(`server listening on ${port}`));

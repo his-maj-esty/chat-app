@@ -14,6 +14,20 @@ services:
       - websocket-server-3
       - websocket-server-4
 
+  main-server:
+    build:
+      context: .
+      dockerfile: ./main-server/DockerFile
+    ports:
+      - 2000:3000
+    environment:
+      DATABASE_URL: ${DATABASE_URL}
+      SECRET: ${SECRET}
+    networks:
+      - mynetwork
+    depends_on:
+      - chat-postgres
+
 
   websocket-server-1: 
     build:
@@ -22,7 +36,7 @@ services:
     ports:
       - 1000:3000
     environment:
-      - DATABASE_URL:${DATABASE_URL}
+      DATABASE_URL: ${DATABASE_URL}
     volumes:
       - .:/app
     networks:
@@ -37,7 +51,7 @@ services:
     ports:
       - 1001:3000
     environment:
-      - DATABASE_URL:${DATABASE_URL}
+      DATABASE_URL: ${DATABASE_URL}
     volumes:
       - .:/app
     networks:
@@ -52,7 +66,7 @@ services:
     ports:
       - 1002:3000
     environment:
-      - DATABASE_URL:${DATABASE_URL}
+      DATABASE_URL: ${DATABASE_URL}
     volumes:
       - .:/app
     networks:
@@ -67,7 +81,7 @@ services:
     ports:
       - 1003:3000
     environment:
-      - DATABASE_URL:${DATABASE_URL}
+      DATABASE_URL: ${DATABASE_URL}
     volumes:
       - .:/app
     networks:

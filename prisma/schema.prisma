@@ -10,27 +10,29 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model User{
-  id String @id @default(uuid())
+model User {
+  id        String @id @default(uuid())
   firstName String
-  lastName String
-  email String @unique
-  rooms Room[]
+  lastName  String
+  email     String @unique
+  password  String
+  rooms     Room[]
 }
 
-model Room{
-  id String @id @default(uuid())
-  name String
-  createdAt DateTime @default(now())
-  users User[]
-  messages Message[]
+model Room {
+  id        String    @id @default(uuid())
+  name      String
+  createdAt DateTime  @default(now())
+  createdBy String
+  users     User[]
+  messages  Message[]
 }
 
-model Message{
-  id String @id @default(uuid())
-  content String
-  sender String
+model Message {
+  id        String   @id @default(uuid())
+  content   String
+  sender    String
   timestamp DateTime @default(now())
-  room Room @relation(fields: [roomId], references: [id])
-  roomId String
+  room      Room     @relation(fields: [roomId], references: [id])
+  roomId    String
 }

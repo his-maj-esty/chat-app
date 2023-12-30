@@ -7,7 +7,7 @@ COPY package.json .
 COPY package-lock.json .
 RUN npm install
 COPY ./prisma .
-RUN npx prisma migrate
+RUN npx prisma generate
 COPY build ./build
 EXPOSE 3000
-CMD ["node", "./build/websocket-server/index.js"]
+CMD ["node", "./build/main-server/index.js"]
