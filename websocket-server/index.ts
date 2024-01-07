@@ -50,16 +50,23 @@ wss.on("connection", (ws) => {
       }
       if (messageObj.type === "message") {
         console.log(messageObj);
-        await RedisService.getInstance().publish(
-          roomId,
-          messageObj.payload.message
-        );
 
-        await db.addMessage({
+        const res = await db.addMessage({
           roomId: roomId,
           message: messageObj.payload.message,
           email: email,
         });
+
+        const ObjToSend = {
+          content: res.content,
+          timestamp: res.timestamp,
+          sender: res.sender
+        }
+
+        await RedisService.getInstance().publish(
+          roomId,
+          JSON.stringify(ObjToSend)
+        );
       }
     } catch (error) {
       console.log(error);
@@ -82,9 +89,7 @@ wss.on("connection", (ws) => {
 server.on("upgrade", async (req: any, socket, head) => {
   try {
     const details = extractCookie(req.headers.cookie, "details");
-    socket.on("error", (error) => console.log(error));
     const isValid = await authenticateUser(details);
-    socket.removeListener("error", (error) => console.log(error));
     if (isValid) {
       wss.handleUpgrade(req, socket, head, (ws) => {
         wss.emit("connection", ws, req);
@@ -94,10 +99,11 @@ server.on("upgrade", async (req: any, socket, head) => {
       socket.destroy();
       return;
     }
-  }
-  catch (error) {
-    console.log("server error");
+  } catch (error) {
     console.log(error);
+    socket.write("HTTP/1.1 401 Unauthorized\r\n\r\n");
+    socket.destroy();
+    return;
   }
 });
 

@@ -23,7 +23,7 @@ export class RedisService {
     this.subscriber.connect();
     this.publisher.connect();
   }
-    
+
   static getInstance(): RedisService {
     if (!this.instance) {
       this.instance = new RedisService();
@@ -33,7 +33,12 @@ export class RedisService {
 
   async subscribe(id: number, ws: any, room: string) {
     try {
-      if (!this.subscriptions.has(room)) {
+      console.log(
+        "subscribers before subscribing",
+        this.subscriptions.get(room)
+      );
+      const isRoomSubscribed = this.subscriptions.get(room)?.length;
+      if (!isRoomSubscribed) {
         this.subscriptions.set(room, [
           {
             userId: id,
@@ -42,14 +47,22 @@ export class RedisService {
         ]);
         console.log("new subscribers", this.subscriptions.get(room)?.length);
 
-        await this.subscriber.subscribe(room, (msg: string, room: string) => {
-          console.log("listener called for :", msg, room);
-          this.subscriptions.get(room)?.map(({ wsObj }) => {
-            wsObj.send(msg);
-            console.log("msg sent from subscribe");
-          });
-        });
-        console.log("subscribed to ", room);
+        await this.subscriber.subscribe(
+          room,
+          (msgObj: string, room: string) => {
+            console.log("listener called for :", msgObj, room);
+            this.subscriptions.get(room)?.map(({ wsObj }) => {
+              wsObj.send(msgObj);
+              console.log("msg sent from subscribe");
+            });
+          }
+        );
+        console.log(
+          "subscribed to ",
+          room,
+          "subscribers are :",
+          this.subscriptions.get(room)
+        );
       } else {
         const currentSubscribers = this.subscriptions.get(room);
         this.subscriptions.set(room, [
@@ -59,8 +72,8 @@ export class RedisService {
         console.log(
           "already subscribed to ",
           room,
-          "and subscribers length:",
-          this.subscriptions.get(room)?.length
+          "subscribers are :",
+          this.subscriptions.get(room)
         );
       }
     } catch (error) {
@@ -70,19 +83,24 @@ export class RedisService {
 
   async unsubscribe(id: number, room: string) {
     try {
-      if (this.subscriptions.has(room)) {
+      const isRoomSubscribed = this.subscriptions.get(room)?.length;
+      if (isRoomSubscribed) {
         const subscribersForChannel = this.subscriptions.get(room);
         console.log("subscribers: ", subscribersForChannel);
-        const newList = subscribersForChannel!.filter(({ userId, wsObj }) => {
+        const newList = subscribersForChannel!.filter(({ userId }) => {
           if (userId !== id) {
             console.log("ids not equal:", id, userId);
-            return { userId: userId, wsObj: wsObj };
+            return true;
           } else {
-            console.log("ids equal:", id, userId);
+            return false;
           }
         });
         console.log("new list: ", newList);
         this.subscriptions.set(room, newList);
+        console.log(
+          "new list at unsubscribing: ",
+          this.subscriptions.get(room)
+        );
         if (newList.length === 0) {
           this.subscriber.unsubscribe(room);
           console.log("unsubscribed for", room);
@@ -95,9 +113,9 @@ export class RedisService {
     }
   }
 
-  async publish(room: string, msg: string) {
+  async publish(room: string, msgObj: string) {
     try {
-      this.publisher.publish(room, msg);
+      this.publisher.publish(room, msgObj);
       console.log("published to", room);
     } catch (error) {
       console.log("error while publishing msg : ", error);

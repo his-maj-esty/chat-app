@@ -3,6 +3,8 @@ import { dbService } from "../services/dbService";
 import { token } from "../utils/token";
 import cookieParser from "cookie-parser";
 import { auth } from "../middlewares/auth";
+import cors from "cors";
+import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library";
 
 const app = express();
 const PORT = 3000;
@@ -11,6 +13,12 @@ const db = new dbService();
 
 app.use(cookieParser());
 app.use(express.json());
+app.use(
+  cors({
+    origin: "http://localhost:5173",
+    credentials: true,
+  })
+);
 
 app.post("/register", async (req, res) => {
   try {
@@ -52,6 +60,7 @@ app.post("/login", async (req, res) => {
         firstName: firstName,
         lastName: lastName,
         email: email,
+        password: password,
       });
       res.cookie("details", signedCookie);
       res.status(200).send({
@@ -77,7 +86,63 @@ app.post("/createRoom", auth, async (req: any, res: any) => {
     });
   } catch (error) {
     console.log(error);
-    res.status(400).json({ message: "failed to create room" });
+    res.status(400).json({ message: "failed to create room", data: null });
+  }
+});
+
+app.delete("/deleteRoom/:roomId", async (req: any, res) => {
+  const roomId  = req.params.roomId;
+  const { email } = req.user;
+  try {
+    const userInRoom = await db.isUserInRoom({ email, roomId });
+    if (userInRoom) {
+      const response = await db.deleteRoom({ roomId, email });
+      res.status(200).json({
+        message: "room deleted successfully",
+        data: { id: response.id, roomName: response.name },
+      });
+    } else {
+      res.status(401).json({ message: "you have not joined this room" });
+    }
+  } catch (error) {
+    if (error instanceof PrismaClientKnownRequestError) {
+      res.status(Number(error.code)).json({ message: "roomId not found" });
+    } else {
+      res.status(501).json({ message: "internal server error" });
+    }
+    console.log(error);
+  }
+});
+
+app.get("/getRooms", auth, async (req: any, res: any) => {
+  try {
+    const { email } = req.user;
+    const { rooms } = await db.getRooms({ email });
+    res
+      .status(200)
+      .json({ message: "rooms fetched successfully", data: rooms });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ message: "server error" });
+  }
+});
+
+app.post("/getMessages", auth, async (req: any, res: any) => {
+  try {
+    const { roomId } = req.body;
+    const { email } = req.user;
+
+    const userInRoom = await db.isUserInRoom({ email, roomId });
+    if (userInRoom) {
+      const messages = await db.getMessages({ roomId });
+      res
+        .status(200)
+        .json({ message: "messages fetched successfully", data: messages });
+    } else {
+      res.status(401).json({ message: "you have not joined this room" });
+    }
+  } catch (err) {
+    res.status(500).json({ message: "server error" });
   }
 });
 

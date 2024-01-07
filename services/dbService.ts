@@ -1,4 +1,5 @@
 import { PrismaClient } from "@prisma/client";
+import { MessageType, RoomType } from "../types/db";
 
 export class dbService {
   static client: PrismaClient;
@@ -29,6 +30,8 @@ export class dbService {
         },
       },
     });
+
+    return res;
   }
 
   async addUser({
@@ -74,6 +77,7 @@ export class dbService {
         password: true,
       },
     });
+    console.log(pass?.password, pass);
     if (pass?.password === password) {
       return true;
     } else {
@@ -99,6 +103,111 @@ export class dbService {
       },
     });
 
+    await dbService.client.user.update({
+      where: {
+        email: creator,
+      },
+      data: {
+        rooms: {
+          connect: {
+            id: res.id,
+          },
+        },
+      },
+    });
+
     return res;
+  }
+
+  async deleteRoom({ roomId, email }: { roomId: string; email: string }): Promise<RoomType> {
+    const res = await dbService.client.user.delete({
+      where: {
+        email: email,
+        rooms: {
+          some: {
+            id:roomId
+          }
+        }
+      },
+      select: {
+        rooms: {
+          select: {
+            id: true,
+            name: true,
+            createdAt: true,
+            createdBy: true
+          }
+        }
+      }
+    });
+    return res.rooms[0];
+  }
+
+
+  async getRooms({
+    email,
+  }: {
+    email: string;
+  }): Promise<{ rooms: RoomType[]; id: string; email: string }> {
+    const res = await dbService.client.user.findUnique({
+      where: {
+        email: email,
+      },
+
+      select: {
+        id: true,
+        email: true,
+        rooms: true,
+      },
+    });
+    return res!;
+  }
+
+
+  async getMessages({ roomId }: { roomId: string }): Promise<MessageType[]> {
+    const res = await dbService.client.room.findUnique({
+      where: {
+        id: roomId,
+      },
+      select: {
+        id: true,
+        name: true,
+        messages: {
+          select: {
+            content: true,
+            sender: true,
+            timestamp: true,
+            id: true
+          },
+        },
+      },
+    });
+    
+    const response = res?.messages ?? [];
+    return response;
+  }
+
+  async isUserInRoom({
+    email,
+    roomId,
+  }: {
+    email: string;
+    roomId: string;
+  }): Promise<boolean> {
+    const res = await dbService.client.user.findUnique({
+      where: {
+        email: email,
+        rooms: {
+          some: {
+            id: roomId
+          }
+        },
+      },
+    });
+    if (res) {
+      return true;
+    } else {
+      return false;
+    }
   }
 }

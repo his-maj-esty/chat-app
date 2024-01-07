@@ -4,29 +4,37 @@ import { token } from "../utils/token";
 const db = new dbService();
 
 export async function auth(req: any, res: any, next: any) {
-  const encryptedDetails = req.cookies.details;
-  const { email, password } = token.verify(encryptedDetails);
-  req.user = { email: email };
-  const isUser = await db.checkUser({ email, password });
-  if (isUser) {
-    next();
-  } else {
-    res.status(401).json({ message: "unauthorized user" });
+  try {
+    const encryptedDetails = req.cookies.details;
+    console.log(encryptedDetails, "cookie");
+    const decrypted = token.verify(encryptedDetails);
+    console.log(decrypted, "decrypted");
+    const { email, password } = decrypted;
+    console.log();
+    req.user = { email: email };
+    const isUser = await db.checkUser({ email, password });
+    if (isUser) {
+      next();
+    } else {
+      res.status(401).json({ message: "unauthorized user" });
+    }
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({ message: "error occured during authorization" });
   }
 }
 
 export async function authenticateUser(details: string) {
-    try {
-        const { email, password } = token.verify(details);
-        const isUser = await db.checkUser({ email, password });
-        if (isUser) {
-            return true;
-        } else {
-            return false;
-        }
+  try {
+    const { email, password } = token.verify(details);
+    const isUser = await db.checkUser({ email, password });
+    if (isUser) {
+      return true;
+    } else {
+      return false;
     }
-    catch (error) {
-        console.log(error);
-        return false;
-    }
+  } catch (error) {
+    console.log(error);
+    return false;
+  }
 }
