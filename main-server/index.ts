@@ -42,7 +42,11 @@ app.post("/register", async (req, res) => {
     });
   } catch (error) {
     console.log(error);
-    res.status(400).send({ message: "failed to register user" });
+    if (error instanceof PrismaClientKnownRequestError) {
+      res.status(409).json({ message: "user already registered" });
+    } else {
+      res.status(400).send({ message: "failed to register user" });
+    }
   }
 });
 
@@ -55,6 +59,11 @@ app.post("/login", async (req, res) => {
       password: password,
     });
 
+    if (isUser === null) {
+      res.status(404).json({ message: "user not found" });
+      return;
+    }
+
     if (isUser) {
       const signedCookie = token.get({
         firstName: firstName,
@@ -62,12 +71,12 @@ app.post("/login", async (req, res) => {
         email: email,
         password: password,
       });
-      res.cookie("details", signedCookie);
+      res.cookie("details", signedCookie, { sameSite: "none" });
       res.status(200).send({
         message: `user with email:  ${email} have been logged in successfully`,
       });
     } else {
-      res.status(400).send({ message: "invalid user" });
+      res.status(401).send({ message: "incorrect password" });
     }
   } catch (error) {
     res.status(500).send({ message: "server error" });
@@ -90,10 +99,10 @@ app.post("/createRoom", auth, async (req: any, res: any) => {
   }
 });
 
-app.delete("/deleteRoom/:roomId", async (req: any, res) => {
-  const roomId  = req.params.roomId;
-  const { email } = req.user;
+app.delete("/deleteRoom/:roomId", auth, async (req: any, res) => {
   try {
+    const roomId = req.params.roomId;
+    const { email } = req.user;
     const userInRoom = await db.isUserInRoom({ email, roomId });
     if (userInRoom) {
       const response = await db.deleteRoom({ roomId, email });

@@ -68,7 +68,7 @@ export class dbService {
   }: {
     email: string;
     password: string;
-  }): Promise<boolean> {
+  }): Promise<boolean | null> {
     const pass = await dbService.client.user.findUnique({
       where: {
         email: email,
@@ -77,7 +77,10 @@ export class dbService {
         password: true,
       },
     });
-    console.log(pass?.password, pass);
+    console.log(pass?.password, pass, "from: db, email:", email, password);
+    if (pass === null) {
+      return pass;
+    }
     if (pass?.password === password) {
       return true;
     } else {
@@ -119,30 +122,26 @@ export class dbService {
     return res;
   }
 
-  async deleteRoom({ roomId, email }: { roomId: string; email: string }): Promise<RoomType> {
-    const res = await dbService.client.user.delete({
+  async deleteRoom({
+    roomId,
+    email,
+  }: {
+    roomId: string;
+    email: string;
+  }): Promise<RoomType> {
+    const res = await dbService.client.room.delete({
       where: {
-        email: email,
-        rooms: {
-          some: {
-            id:roomId
-          }
-        }
+        id: roomId,
       },
       select: {
-        rooms: {
-          select: {
-            id: true,
-            name: true,
-            createdAt: true,
-            createdBy: true
-          }
-        }
-      }
+        id: true,
+        name: true,
+        createdAt: true,
+        createdBy: true,
+      },
     });
-    return res.rooms[0];
+    return res;
   }
-
 
   async getRooms({
     email,
@@ -163,7 +162,6 @@ export class dbService {
     return res!;
   }
 
-
   async getMessages({ roomId }: { roomId: string }): Promise<MessageType[]> {
     const res = await dbService.client.room.findUnique({
       where: {
@@ -177,12 +175,12 @@ export class dbService {
             content: true,
             sender: true,
             timestamp: true,
-            id: true
+            id: true,
           },
         },
       },
     });
-    
+
     const response = res?.messages ?? [];
     return response;
   }
@@ -199,8 +197,8 @@ export class dbService {
         email: email,
         rooms: {
           some: {
-            id: roomId
-          }
+            id: roomId,
+          },
         },
       },
     });

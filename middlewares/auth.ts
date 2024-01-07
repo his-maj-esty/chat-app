@@ -10,8 +10,9 @@ export async function auth(req: any, res: any, next: any) {
     const decrypted = token.verify(encryptedDetails);
     console.log(decrypted, "decrypted");
     const { email, password } = decrypted;
-    console.log();
+    console.log("email:", email, password);
     req.user = { email: email };
+    console.log(req.user, "req,user");
     const isUser = await db.checkUser({ email, password });
     if (isUser) {
       next();

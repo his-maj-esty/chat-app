@@ -42,13 +42,13 @@ export function CreateRoom() {
   return (
     <Dialog>
       <DialogTrigger asChild>
-        <Button className="rounded-full p-2 text-white bg-gradient-to-tr from-[#784AF7] to-[#B748FE]">
+        <Button className="rounded-full p-2 w-fit text-white bg-gradient-to-tr from-[#784AF7] to-[#B748FE]">
           <div>
             <svg
               xmlns="http://www.w3.org/2000/svg"
               viewBox="0 0 24 24"
               fill="currentColor"
-              className="w-5 h-5"
+              className="w-6 h-6"
             >
               <path
                 fill-rule="evenodd"

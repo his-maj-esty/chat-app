@@ -18,6 +18,8 @@ function Chat() {
   const [messages, setMessages] = useRecoilState(messageState);
 
   useEffect(() => {
+    console.log("Effect - messages: ", messages);
+
     if (messages && messages.length > 0) {
       var prevMessage: MessageType = messages[messages.length - 1];
       console.log("Effect - prevMessage: ", prevMessage);
@@ -55,7 +57,7 @@ function Chat() {
   }
 
   return (
-    <div className="relative max-h-screen overflow-y-auto min-h-screen">
+    <div className="relative max-h-[90vh] overflow-y-auto">
       <div
         id="serverMessages"
         className="relative flex flex-col-reverse space-y-3 pb-8 w-full min-h-screen"
