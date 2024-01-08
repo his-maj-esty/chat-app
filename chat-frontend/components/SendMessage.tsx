@@ -5,7 +5,7 @@ import axios from "axios";
 import { useRecoilState, useSetRecoilState } from "recoil";
 import { roomState } from "../states/roomState";
 import { clickState } from "../states/clickState";
-import { messageState } from "../states/message";
+import { messageState } from "../states/messageState";
 
 function SendMessage({ roomId }: { roomId: string }) {
   const [input, setInput] = useState("");

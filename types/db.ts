@@ -11,3 +11,9 @@ export interface MessageType {
   timestamp: Date;
   sender: string;
 }
+
+export interface UserType {
+  firstName: string;
+  lastName: string;
+  email: string;
+}

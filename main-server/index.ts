@@ -71,7 +71,7 @@ app.post("/login", async (req, res) => {
         email: email,
         password: password,
       });
-      res.cookie("details", signedCookie, { sameSite: "none" });
+      res.cookie("details", signedCookie);
       res.status(200).send({
         message: `user with email:  ${email} have been logged in successfully`,
       });
@@ -135,6 +135,18 @@ app.get("/getRooms", auth, async (req: any, res: any) => {
     res.status(500).json({ message: "server error" });
   }
 });
+
+app.post("/getDetails", auth, async (req: any, res) => {
+  try {
+    const { email } = req.user;
+    const details = await db.getDetails({ email });
+    res.json({ message: "details fetched successfully", data: details });
+  }
+  catch (error) {
+    res.status(501).json({ message: "server error" });
+    console.log(error);
+  }
+})
 
 app.post("/getMessages", auth, async (req: any, res: any) => {
   try {

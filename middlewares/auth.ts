@@ -1,3 +1,4 @@
+import { JsonWebTokenError, TokenExpiredError } from "jsonwebtoken";
 import { dbService } from "../services/dbService";
 import { token } from "../utils/token";
 
@@ -21,7 +22,13 @@ export async function auth(req: any, res: any, next: any) {
     }
   } catch (err) {
     console.log(err);
-    res.status(500).json({ message: "error occured during authorization" });
+    if (err instanceof TokenExpiredError) {
+      res.status(440).json({ message: "cookie expired. login again" });
+      return;
+    }
+    if (err instanceof JsonWebTokenError) {
+      res.status(400).json({ message: "cookie undefined" });
+    }
   }
 }
 

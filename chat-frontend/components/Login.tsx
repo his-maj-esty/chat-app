@@ -15,15 +15,13 @@ import { Input } from "../shad/components/ui/input";
 import { Label } from "../shad/components/ui/label";
 import axios, { AxiosError } from "axios";
 import { useSetRecoilState } from "recoil";
-import { roomState } from "../states/roomState";
-import { filteredRoomsState } from "../states/filteredRooms";
-import { Divide } from "lucide-react";
-import { response } from "express";
+import { cookieErrorState } from "../states/cookieErrorState";
 
 export function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const setCookieError = useSetRecoilState(cookieErrorState);
 
   async function handleLogin(event: any) {
     event.preventDefault();
@@ -38,6 +36,7 @@ export function Login() {
         { withCredentials: true }
       );
       window.location.replace("http://localhost:5173/dashboard");
+      setCookieError(false);
     } catch (error: any) {
       if (error.response.status === 404) {
         setError("user doesn't exist. Please signup");
@@ -45,6 +44,7 @@ export function Login() {
       if (error.response.status === 401) {
         setError("incorrect password");
       }
+      setCookieError(true);
     }
   }
 
@@ -58,7 +58,7 @@ export function Login() {
       <DialogContent className="sm:max-w-[425px] bg-white">
         <form onSubmit={handleLogin} className="group">
           <DialogHeader>
-            <DialogTitle>Register</DialogTitle>
+            <DialogTitle>Login</DialogTitle>
             <DialogDescription>Enter your details below</DialogDescription>
             {error && <span className=" text-red-400 text-sm">{error}</span>}
           </DialogHeader>

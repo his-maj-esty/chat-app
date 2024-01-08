@@ -88,6 +88,20 @@ export class dbService {
     }
   }
 
+  async getDetails({email}: {email: string}) {
+    const details = await dbService.client.user.findUnique({
+      where: {
+        email: email,
+      },
+      select: {
+        firstName: true,
+        lastName: true,
+        email: true,
+      },
+    });
+
+    return details;
+  }
   async createRoom({
     roomName,
     creator,

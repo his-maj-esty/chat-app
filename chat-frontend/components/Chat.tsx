@@ -6,7 +6,7 @@ import SendMessage from "./SendMessage";
 import { useRecoilState, useRecoilValue } from "recoil";
 import { MessageType } from "../../types/db";
 import DateComponent from "./DateComponent";
-import { messageState } from "../states/message";
+import { messageState } from "../states/messageState";
 axios.defaults.baseURL = "http://localhost:80";
 
 function Chat() {

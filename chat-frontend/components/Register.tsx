@@ -46,7 +46,6 @@ export function Register() {
     } catch (error: any) {
       if (error.response.status === 409) {
         setError("user already registered.");
-        console.log("smae mainl");
       }
     }
   }
