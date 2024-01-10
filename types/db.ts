@@ -10,6 +10,7 @@ export interface MessageType {
   content: string;
   timestamp: Date;
   sender: string;
+  type: string
 }
 
 export interface UserType {

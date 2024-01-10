@@ -1,5 +1,5 @@
 import { PrismaClient } from "@prisma/client";
-import { MessageType, RoomType } from "../types/db";
+import { MessageType, RoomType, UserType } from "../types/db";
 
 export class dbService {
   static client: PrismaClient;
@@ -14,15 +14,18 @@ export class dbService {
     roomId,
     message,
     email,
+    type,
   }: {
     roomId: string;
     message: string;
     email: string;
+    type: string;
   }) {
     const res = await dbService.client.message.create({
       data: {
         content: message,
         sender: email,
+        type: type,
         room: {
           connect: {
             id: roomId,
@@ -88,7 +91,7 @@ export class dbService {
     }
   }
 
-  async getDetails({email}: {email: string}) {
+  async getDetails({ email }: { email: string }) {
     const details = await dbService.client.user.findUnique({
       where: {
         email: email,
@@ -136,6 +139,57 @@ export class dbService {
     return res;
   }
 
+  async addUserInRoom({
+    email,
+    roomId,
+  }: {
+    email: string;
+    roomId: string;
+  }): Promise<{
+    firstName: string;
+    lastName: string;
+    email: string;
+  }> {
+    const res = await dbService.client.user.update({
+      where: {
+        email: email,
+      },
+      data: {
+        rooms: {
+          connect: {
+            id: roomId,
+          },
+        },
+      },
+      select: {
+        firstName: true,
+        lastName: true,
+        email: true,
+      },
+    });
+
+    return res;
+  }
+
+  async getUsersInRoom({ roomId }: { roomId: string }): Promise<UserType[]> {
+    const res = await dbService.client.room.findUnique({
+      where: {
+        id: roomId,
+      },
+      select: {
+        users: {
+          select: {
+            email: true,
+            firstName: true,
+            lastName: true,
+          },
+        },
+      },
+    });
+
+    const users = res?.users ?? [];
+    return users;
+  }
   async deleteRoom({
     roomId,
     email,
@@ -190,6 +244,7 @@ export class dbService {
             sender: true,
             timestamp: true,
             id: true,
+            type: true,
           },
         },
       },

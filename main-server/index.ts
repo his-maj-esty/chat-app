@@ -136,17 +136,28 @@ app.get("/getRooms", auth, async (req: any, res: any) => {
   }
 });
 
+app.get("/usersInRoom/:roomId", auth, async (req, res) => {
+  try {
+    const roomId = req.params.roomId;
+    const users = await db.getUsersInRoom({ roomId });
+    res.json({ message: "users fetched successfully", data: users });
+  }
+  catch (error) {
+    console.log(error);
+    res.status(500).json({ message: "error occurred" });
+  }
+});
+
 app.post("/getDetails", auth, async (req: any, res) => {
   try {
     const { email } = req.user;
     const details = await db.getDetails({ email });
     res.json({ message: "details fetched successfully", data: details });
-  }
-  catch (error) {
+  } catch (error) {
     res.status(501).json({ message: "server error" });
     console.log(error);
   }
-})
+});
 
 app.post("/getMessages", auth, async (req: any, res: any) => {
   try {

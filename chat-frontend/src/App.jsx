@@ -2,12 +2,10 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Dashboard from "../components/Dashboard";
 import Chat from "../components/Chat";
 import "./App.css";
-import React from "react";
 
 function App() {
   return (
     <>
-      <React.StrictMode>
         <BrowserRouter>
           <Routes>
             <Route path="/dashboard" element={<Dashboard />}>
@@ -15,7 +13,6 @@ function App() {
             </Route>
           </Routes>
         </BrowserRouter>
-      </React.StrictMode>
     </>
   );
 }

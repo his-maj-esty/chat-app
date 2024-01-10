@@ -116,7 +116,7 @@ export class RedisService {
   async publish(room: string, msgObj: string) {
     try {
       this.publisher.publish(room, msgObj);
-      console.log("published to", room);
+      console.log("published to", room, "and msgObj is :", msgObj);
     } catch (error) {
       console.log("error while publishing msg : ", error);
     }

@@ -30,6 +30,7 @@ model Room {
 
 model Message {
   id        String   @id @default(uuid())
+  type      String   
   content   String
   sender    String
   timestamp DateTime @default(now())

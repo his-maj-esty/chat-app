@@ -47,6 +47,43 @@ wss.on("connection", (ws) => {
           email,
         };
         await RedisService.getInstance().subscribe(wsId, ws, roomId);
+
+        const isUserInRoom = await db.isUserInRoom({ email, roomId }); 
+        if (!isUserInRoom) {
+          const user = await db.addUserInRoom({ email, roomId });
+          const res = await db.addMessage({
+            roomId: roomId,
+            message: "",
+            email: user.email,
+            type: "newJoin",
+          });
+
+          const ObjToSend = {
+            type: res.type,
+            content: res.content,
+            timestamp: res.timestamp,
+            sender: res.sender,
+          };
+
+          await RedisService.getInstance().publish(
+            roomId,
+            JSON.stringify(ObjToSend)
+          );
+        }
+        else {
+          const ObjToSend = {
+            type: "join",
+            content: "",
+            timestamp: "",
+            sender: email,
+          };
+
+          await RedisService.getInstance().publish(
+            roomId,
+            JSON.stringify(ObjToSend)
+          );
+        }        
+
       }
       if (messageObj.type === "message") {
         console.log(messageObj);
@@ -55,9 +92,11 @@ wss.on("connection", (ws) => {
           roomId: roomId,
           message: messageObj.payload.message,
           email: email,
+          type: "message"
         });
 
         const ObjToSend = {
+          type: "message",
           content: res.content,
           timestamp: res.timestamp,
           sender: res.sender
@@ -79,6 +118,20 @@ wss.on("connection", (ws) => {
     if (users[wsId]) {
       console.log("user disconnected");
       await RedisService.getInstance().unsubscribe(wsId, users[wsId].roomId);
+
+      const ObjToSend = {
+        type: "close",
+        content: "",
+        timestamp: "",
+        sender: users[wsId].email,
+      };
+
+      console.log("obj at close :", ObjToSend);
+
+      await RedisService.getInstance().publish(
+        users[wsId].roomId,
+        JSON.stringify(ObjToSend)
+      );
       delete users[wsId];
     } else {
       console.log("user left without joining");

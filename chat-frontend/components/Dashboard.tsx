@@ -4,7 +4,7 @@ import { Outlet } from "react-router-dom";
 
 function Dashboard() {
   return (
-    <div className="flex w-screen overflow-y-scroll max-h-[90vh]">
+    <div className="flex w-screen overflow-clip max-h-[90vh]">
       <AllRooms />
       <div className="w-full">
         <Outlet />

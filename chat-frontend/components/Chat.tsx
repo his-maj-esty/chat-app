@@ -7,25 +7,19 @@ import { useRecoilState, useRecoilValue } from "recoil";
 import { MessageType } from "../../types/db";
 import DateComponent from "./DateComponent";
 import { messageState } from "../states/messageState";
+import { userState } from "../states/userState";
+import { Divide } from "lucide-react";
+import NewUser from "./NewUser";
+import ChatNavBar from "./ChatNavBar";
 axios.defaults.baseURL = "http://localhost:80";
 
 function Chat() {
   const params = useParams();
   const roomId = params.roomId;
-  const email = "newmail@dfasdc.com";
   console.log("roomID", roomId);
   const messagesEndRef = useRef(null);
   const [messages, setMessages] = useRecoilState(messageState);
-
-  useEffect(() => {
-    console.log("Effect - messages: ", messages);
-
-    if (messages && messages.length > 0) {
-      var prevMessage: MessageType = messages[messages.length - 1];
-      console.log("Effect - prevMessage: ", prevMessage);
-    }
-  }, [messages]);
-
+  const user = useRecoilValue(userState);
 
   useEffect(() => {
     async function fetchMessages() {
@@ -58,9 +52,11 @@ function Chat() {
 
   return (
     <div className="relative max-h-[90vh] overflow-y-auto">
+      <ChatNavBar roomId={roomId!}></ChatNavBar>
+
       <div
         id="serverMessages"
-        className="relative flex flex-col-reverse space-y-3 pb-8 w-full min-h-screen"
+        className="relative flex flex-col-reverse space-y-5 pb-8 w-full min-h-screen px-6"
       >
         {messages
           .slice()
@@ -77,15 +73,16 @@ function Chat() {
             return (
               <>
                 {DifferentDate && <DateComponent timestamp={DifferentDate} />}
-                {message.sender === email ? (
-                  <div className="flex justify-end max-w-screen-2xl w-full">
+                {message.sender === user.email && message.type == "message" && (
+                  <div className="flex justify-end max-w-screen-2xl w-full mb-5">
                     <MessageBox
                       content={message.content}
                       sender={message.sender}
                       timestamp={message.timestamp}
                     />
                   </div>
-                ) : (
+                )}
+                {message.sender !== user.email && message.type == "message" && (
                   <div className="flex justify-start w-full max-w-screen-2xl">
                     <MessageBox
                       content={message.content}
@@ -93,6 +90,9 @@ function Chat() {
                       timestamp={message.timestamp}
                     />
                   </div>
+                )}
+                {message.type === "newJoin" && (
+                  <NewUser sender={message.sender} />
                 )}
                 {message === messages[0] && (
                   <DateComponent timestamp={message.timestamp} />

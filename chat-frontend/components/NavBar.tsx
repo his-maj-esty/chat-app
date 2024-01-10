@@ -39,7 +39,7 @@ function NavBar() {
   }
 
   return (
-    <div className="sticky top-0 z-50 flex justify-between w-full px-8 py-3 bg-gray-100">
+    <div className="sticky top-0 z-[1000] flex justify-between w-full px-8 py-3 bg-gray-100">
       <div>Chat App</div>
       {user.email === "" && (
         <div className="flex space-x-3">
